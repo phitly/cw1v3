@@ -62,9 +62,38 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int _counter = 0;
   bool _showFirstImage = true;
+  
+  // Animation components
+  late AnimationController _animationController;
+  late CurvedAnimation _curvedAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize AnimationController with 800ms duration
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    // Create CurvedAnimation for smoother transitions
+    _curvedAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    
+    // Start with animation at full opacity
+    _animationController.value = 1.0;
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -72,10 +101,17 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _toggleImage() {
+  void _toggleImage() async {
+    // Fade out current image
+    await _animationController.reverse();
+    
+    // Switch the image
     setState(() {
       _showFirstImage = !_showFirstImage;
     });
+    
+    // Fade in new image
+    await _animationController.forward();
   }
 
   @override
@@ -125,17 +161,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: _showFirstImage
-                      ? Icon(
-                          Icons.sunny,
-                          size: 100,
-                          color: widget.isDarkMode ? Colors.yellow : Colors.orange,
-                        )
-                      : Icon(
-                          Icons.nightlight_round,
-                          size: 100,
-                          color: widget.isDarkMode ? Colors.lightBlue : Colors.indigo,
-                        ),
+                  child: FadeTransition(
+                    opacity: _curvedAnimation,
+                    child: _showFirstImage
+                        ? Image.asset(
+                            'assets/images/light.png',
+                            width: 150,
+                            height: 150,
+                          )
+                        : Image.asset(
+                            'assets/images/dark.png',
+                            width: 150,
+                            height: 150,
+                          ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
